@@ -18,7 +18,6 @@ interface login {
 
 const App = () => {
   const [Name, setName] = useState("");
-  const [Pin, setPin] = useState("");
   const [ShowProfile, setShowProfile] = useState(false);
 
   // Check if the user creds are already saved if they are then skip login
@@ -42,13 +41,12 @@ const App = () => {
     }
 
     setName(formValues.name);
-    setPin(formValues.pin);
+
     setShowProfile(true);
   };
 
   const onSignOut = (): void => {
     setName("");
-    setPin("");
 
     window.localStorage.clear();
   };
@@ -147,6 +145,16 @@ const App = () => {
           </Form>
         </Card>
       </div>
+
+      <footer className="footer">
+        <section className="footerbar">
+            <ul className="footerbar-list">
+                <li>&copy; 2020 Copyright MiBank Inc.</li>
+            </ul>
+        </section>
+    </footer>
+
+   
     </div>
   );
 };
