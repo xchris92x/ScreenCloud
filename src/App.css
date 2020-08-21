@@ -67,6 +67,7 @@
     #loginCard {
         width: 350px;
         align-content: center;
+        margin-top: 10px;
     }
     
     .ant-menu-submenu-title:hover {

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import Navigation from "./Navigation";
 
-
 interface login {
   name: string;
   pin: string;
@@ -17,13 +16,18 @@ const App = () => {
 
   // Check if the user creds are already saved if they are then skip login
   useEffect(() => {
-    let name = window.localStorage.getItem("Name");
-    let pin = window.localStorage.getItem("Pin");
+    let name = window.localStorage.getItem("Name")!;
+    let pin= window.localStorage.getItem("Pin")!;
 
     if (name && pin) {
-      login(pin);
+      getCachedUserCredentials(name,pin);
     }
   }, []);
+
+  const getCachedUserCredentials = async (name: string, pin: string) => {
+    let userInfo = await login(pin);
+    processLoginResponse(userInfo, { name: name, pin: pin, remember: true });
+  };
 
   const onLoginSubmission = async (values: any): Promise<void> => {
     let formValues: login = values;
@@ -31,8 +35,12 @@ const App = () => {
 
     let userInfo = await login(formValues.pin);
 
-    console.log(userInfo);
+    processLoginResponse(userInfo, formValues);
 
+    console.log(userInfo);
+  };
+
+  const processLoginResponse = (userInfo: any, formValues: login) => {
     // Login Successful
     if (userInfo.currentBalance) {
       setName(formValues.name);
@@ -44,12 +52,15 @@ const App = () => {
         window.localStorage.setItem("Name", formValues.name);
         window.localStorage.setItem("Pin", formValues.pin);
       }
-    }else{
-      if(userInfo.error){
+    } else {
+      if (userInfo.error) {
+
+        // Clear local storage, this prevents incorrect stored credentials being reused
+        window.localStorage.clear();
+
         notification.error({
-          message: 'Invalid Pin',
-          description:
-            userInfo.error,
+          message: "Invalid Pin",
+          description: userInfo.error,
         });
       }
     }
