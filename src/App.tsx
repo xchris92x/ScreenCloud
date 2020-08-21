@@ -1,14 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Button, Menu, Form, Input, Checkbox, Card } from "antd";
+import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
+import { Button, Card, Checkbox, Form, Input, notification } from "antd";
+import React, { useEffect, useState } from "react";
 import "./App.css";
-import SubMenu from "antd/lib/menu/SubMenu";
-import {
-  BankOutlined,
-  AppstoreOutlined,
-  SettingOutlined,
-  EyeTwoTone,
-  EyeInvisibleOutlined,
-} from "@ant-design/icons";
+import Navigation from "./Navigation";
+
 
 interface login {
   name: string;
@@ -26,32 +21,49 @@ const App = () => {
     let pin = window.localStorage.getItem("Pin");
 
     if (name && pin) {
-      getUserBalance(pin);
+      login(pin);
     }
   }, []);
 
-  const onFinish = (values: any): void => {
+  const onLoginSubmission = async (values: any): Promise<void> => {
     let formValues: login = values;
     console.log("Success:", formValues);
 
-    // More secure ways to store this but using it as demo of functionality
-    if (formValues.remember) {
-      window.localStorage.setItem("Name", formValues.name);
-      window.localStorage.setItem("Pin", formValues.pin);
+    let userInfo = await login(formValues.pin);
+
+    console.log(userInfo);
+
+    // Login Successful
+    if (userInfo.currentBalance) {
+      setName(formValues.name);
+
+      setShowProfile(true);
+
+      // More secure ways to store this but using it as demo of functionality
+      if (formValues.remember) {
+        window.localStorage.setItem("Name", formValues.name);
+        window.localStorage.setItem("Pin", formValues.pin);
+      }
+    }else{
+      if(userInfo.error){
+        notification.error({
+          message: 'Invalid Pin',
+          description:
+            userInfo.error,
+        });
+      }
     }
-
-    setName(formValues.name);
-
-    setShowProfile(true);
   };
 
   const onSignOut = (): void => {
     setName("");
 
+    setShowProfile(false);
+
     window.localStorage.clear();
   };
 
-  async function getUserBalance(pin: string) {
+  async function login(pin: string) {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
@@ -70,45 +82,15 @@ const App = () => {
     );
     const body = await response.json();
 
-    // fetch("https://frontend-challenge.screencloud-michael.now.sh/api/pin", requestOptions)
-    // .then(response => response.text())
-    // .then(result => console.log(result))
-    // .catch(error => console.log('error', error));
-
-    // console.log("ello");
-    console.log(response);
-    console.log(body);
+    return body;
   }
 
   return (
     <div className="App">
-      <Menu mode="horizontal" id="navbar">
-        <Menu.Item
-          key="bank"
-          icon={<BankOutlined />}
-          style={{ color: "white" }}
-        >
-          MiBank
-        </Menu.Item>
-        {/* Normally I wouldn't do inline but couldn't seem to add an id */}
-
-        {ShowProfile ? (
-          <SubMenu
-            key="profileMenuOption"
-            icon={<SettingOutlined />}
-            title={Name}
-            style={{ float: "right", color: "white" }}
-          >
-            <Menu.Item key="setting:1" onClick={onSignOut}>
-              SignOut
-            </Menu.Item>
-          </SubMenu>
-        ) : null}
-      </Menu>
-
+      <Navigation ShowProfile={ShowProfile} Name={Name} onSignOut={onSignOut} />
       <div id="mainContainer">
         <Card title="Enter Your Bank Credentials" id="loginCard">
-          <Form name="basic" onFinish={onFinish}>
+          <Form name="basic" onFinish={onLoginSubmission}>
             <Form.Item
               label="Name"
               name="name"
@@ -148,13 +130,11 @@ const App = () => {
 
       <footer className="footer">
         <section className="footerbar">
-            <ul className="footerbar-list">
-                <li>&copy; 2020 Copyright MiBank Inc.</li>
-            </ul>
+          <ul className="footerbar-list">
+            <li>&copy; 2020 Copyright MiBank Inc.</li>
+          </ul>
         </section>
-    </footer>
-
-   
+      </footer>
     </div>
   );
 };

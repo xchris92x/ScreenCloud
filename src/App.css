@@ -21,6 +21,7 @@
         /* align-items: center; */
         justify-content: center;
         flex: 1;
+        align-self: center;
     }
     
     .App-logo {
