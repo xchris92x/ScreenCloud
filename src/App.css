@@ -22,6 +22,7 @@
         justify-content: center;
         flex: 1;
         align-self: center;
+        height: 100%;
     }
     
     .App-logo {
@@ -64,10 +65,9 @@
         color: white;
     }
     
-    #loginCard {
-        width: 350px;
+    .ant-card {
+        width: 450px;
         align-content: center;
-        margin-top: 10px;
     }
     
     .ant-menu-submenu-title:hover {
@@ -119,4 +119,54 @@
     .footerbar-list {
         flex: 1;
         flex-direction: row-reverse;
+    }
+    
+    #Login,
+    #LoginLoading {
+        flex-direction: row;
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+    /* Dashboard */
+    
+    #Dashboard {
+        flex-direction: row;
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+    
+    .BalanceButton {
+        margin-left: 5px;
+    }
+    
+    #Balance {
+        margin: 0;
+        color: #27ae60;
+    }
+    
+    #BalanceCard>.ant-card-body {
+        padding-top: 0;
+    }
+    
+    #withdrawlCard {
+        align-content: center;
+    }
+    
+    @media only screen and (max-width: 600px) {
+        #Dashboard {
+            flex-direction: column;
+            display: flex;
+        }
+    }
+    
+    .CardBackButton {
+        float: left;
+        background-color: #f1c40f;
+        border: none;
+    }
+    
+    .CardBackButton:hover {
+        opacity: 0.7;
     }
