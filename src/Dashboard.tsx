@@ -1,31 +1,23 @@
-import React, { useEffect, useState, useReducer } from "react";
-import {
-  Card,
-  Timeline,
-  Button,
-  Form,
-  Input,
-  InputNumber,
-  notification,
-} from "antd";
-
 import { LeftOutlined } from "@ant-design/icons";
+import { Button, Card, Form, InputNumber, notification, Timeline, List, Avatar } from "antd";
+import React, { useState } from "react";
 
 const Dashboard = ({
   initialBalance,
   overdraft,
 }: {
-    initialBalance: number;
+  initialBalance: number;
   overdraft: number;
 }) => {
-
-   
-
   const [showWithdrawlForm, setShowWithdrawlForm] = useState(false);
+  const [showWithdrawlConfirmation, setShowWithdrawlConfirmation] = useState(
+    false
+  );
   const [showActivity, setShowActivity] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
-  const [userBalance, setUserBalance] = useState(initialBalance + overdraft );
+  const [userBalance, setUserBalance] = useState(initialBalance + overdraft);
   const [activityHistory, setActivity] = useState([]) as any;
+  const [withDrawnNotes, setwithDrawnNotes] = useState([]) as any;
 
   //   const [availableNotes, setAvailableNotes] = useReducer(
   //     (state: any, action: any): any => {
@@ -49,14 +41,10 @@ const Dashboard = ({
   }) as any;
 
   const onWithDrawalFormSubmission = (formValues: any) => {
-    console.log(formValues);
-
     calculateNoteWithdrawl(formValues.withdrawlAmount);
   };
 
   const calculateNoteWithdrawl = (withdrawlAmount: number) => {
-    console.log("availableNotesStart", availableNotes);
-
     // Make sure the withdrawl amount is in multiples of 5 to allow notes to meet the value
     if (withdrawlAmount % 5 != 0) {
       notification.error({
@@ -88,15 +76,13 @@ const Dashboard = ({
     );
 
     let remainingWithdrawlAmount: number = withdrawlAmount;
-    let withdrawnNotes: any = {};
+    let notesWithdrawn: any = [];
 
-    let newAvailableNotesValue: any = Object.assign({}, availableNotes);
+    let currentAvailableNotes: any = Object.assign({}, availableNotes);
 
     // Iterate through each note and work out how many of each note is required starting with the largest to smallest
-    sortedNotes.forEach((note: string) => {
+    sortedNotes.forEach((note: string, index: number) => {
       let numberOfPossibleNotesAvailable = availableNotes[note];
-
-      console.log("availableNotes[note]", availableNotes[note]);
 
       let numberOfNotesRequired = Math.floor(
         remainingWithdrawlAmount / Number(note)
@@ -106,46 +92,63 @@ const Dashboard = ({
         numberOfNotesRequired = numberOfPossibleNotesAvailable;
       }
 
-      //Each note proceeding takes 2x as many to achieve the higher level note, to spread the notes out more evenly,
+      //Each note proceeding takes 2x as many to achieve the higher value note, to spread the notes out more evenly,
       //if the large note is greater than 1 then subtract 1 and take 2 of the smaller notes if they are available and do not result in the next notes being 0
+      if (numberOfNotesRequired > 1 && index != sortedNotes.length - 1) {
+        let smallerNotesTotal = 0;
+
+        // Check if there are enough smaller notes to make the balance requirement
+        for (let i = index; i < sortedNotes.length; i++) {
+          let smallerNote = sortedNotes[i];
+
+          smallerNotesTotal +=
+            currentAvailableNotes[smallerNote] * Number(smallerNote);
+
+          console.log(smallerNote, currentAvailableNotes[smallerNote]);
+        }
+
+        console.log("notesTotal", smallerNotesTotal);
+
+        let requiredBalance =
+          withdrawlAmount - (numberOfNotesRequired - 1) * Number(note);
+
+        console.log("requiredBalance", requiredBalance);
+
+        if (requiredBalance < smallerNotesTotal) {
+          numberOfNotesRequired--;
+        }
+      }
 
       // Remove Values from remaining WithdrawlAmount
-      remainingWithdrawlAmount =
-        remainingWithdrawlAmount -
+      remainingWithdrawlAmount -=
         Math.floor(numberOfNotesRequired) * Number(note);
 
-      console.log(numberOfNotesRequired);
-      console.log(numberOfNotesRequired);
-      console.log("Reduction amount", numberOfNotesRequired * Number(note));
-
-      console.log("remainingWithdrawlAmount", remainingWithdrawlAmount);
-
-      withdrawnNotes[note] = numberOfNotesRequired;
+      notesWithdrawn.push({note: note ,value: numberOfNotesRequired});
 
       // // Subtract the notes from the running total
 
-      newAvailableNotesValue[note] -= numberOfNotesRequired;
-
-      // console.log(newAvailableNotesValue[note]);
-
-      console.log("availableNotes", availableNotes);
-      console.log("newAvailableNotesValue", newAvailableNotesValue);
+      currentAvailableNotes[note] -= numberOfNotesRequired;
     });
 
-    setAvailableNotes(newAvailableNotesValue);
+    setAvailableNotes(currentAvailableNotes);
     setUserBalance(userBalance - withdrawlAmount);
 
-    let activity : string[]= [...activityHistory];
+    let activity: string[] = [...activityHistory];
 
-    activity.push(`£${withdrawlAmount} withdrawn ${new Date().toLocaleDateString()}`);
+    activity.push(
+      `£${withdrawlAmount} withdrawn ${new Date().toLocaleDateString()}`
+    );
 
     // Add Item to Activity
     setActivity(activity);
 
-    console.log(sortedNotes);
-    console.log("withdrawnNotes", withdrawnNotes);
+    setShowWithdrawlForm(false);
+    setShowWithdrawlConfirmation(true);
+    setwithDrawnNotes(notesWithdrawn);
+
+    console.log("withdrawnNotes", notesWithdrawn);
     console.log("availableNotes", availableNotes);
-    console.log("newAvailableNotesValue", newAvailableNotesValue);
+    console.log("newAvailableNotesValue", currentAvailableNotes);
   };
 
   return (
@@ -181,13 +184,59 @@ const Dashboard = ({
       ) : null}
 
       {showWithdrawlForm ? (
+        <div>
+          <Card
+            title={
+              <div>
+                <button
+                  className="CardBackButton"
+                  onClick={() => {
+                    setShowWithdrawlForm(false);
+
+                    setShowBalance(true);
+                  }}
+                >
+                  <LeftOutlined />
+                  Back
+                </button>
+                <span>Make a Withdrawl</span>
+              </div>
+            }
+            id="withdrawlCard"
+          >
+            <Form name="basic" onFinish={onWithDrawalFormSubmission}>
+              <Form.Item
+                label="Amount"
+                name="withdrawlAmount"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter amount to withdraw !",
+                  },
+                  { type: "integer", message: "Please enter a number !" },
+                ]}
+              >
+                <InputNumber />
+              </Form.Item>
+
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Submit
+                </Button>
+              </Form.Item>
+            </Form>
+          </Card>
+        </div>
+      ) : null}
+
+      {showWithdrawlConfirmation ? (
         <Card
           title={
             <div>
               <button
                 className="CardBackButton"
                 onClick={() => {
-                  setShowWithdrawlForm(false);
+                  setShowWithdrawlConfirmation(false);
 
                   setShowBalance(true);
                 }}
@@ -195,32 +244,39 @@ const Dashboard = ({
                 <LeftOutlined />
                 Back
               </button>
-              <span>Make a Withdrawl</span>
+              <span>Withdrawl Successful</span>
             </div>
           }
-          id="withdrawlCard"
+          id="ConfrimationCard"
         >
-          <Form name="basic" onFinish={onWithDrawalFormSubmission}>
-            <Form.Item
-              label="Amount"
-              name="withdrawlAmount"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter amount to withdraw !",
-                },
-                { type: "integer", message: "Please enter a number !" },
-              ]}
-            >
-              <InputNumber />
-            </Form.Item>
+          <List
+            itemLayout="horizontal"
+            dataSource={withDrawnNotes}
+            renderItem={(note : {
+                note: string;
+                value: number;
+            }) => (
+              <List.Item>
+                <List.Item.Meta
+                  avatar={
+                    <Avatar src={`${process.env.PUBLIC_URL}/Pound-Sterling.png`} />
+                  }
+                title={<a href="https://ant.design">{note.value}x £{note.note} notes withdrawn</a>}
+                />
+              </List.Item>
+            )}
+          />
+          <Button
+            className="BalanceButton"
+            type="primary"
+            onClick={() => {
+              setShowWithdrawlConfirmation(false);
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Submit
-              </Button>
-            </Form.Item>
-          </Form>
+              setShowBalance(true);
+            }}
+          >
+            View Account
+          </Button>
         </Card>
       ) : null}
 
@@ -244,18 +300,9 @@ const Dashboard = ({
           }
         >
           <Timeline>
-              {activityHistory.map((activity: string)=>{
-
-              return(<Timeline.Item>{activity}</Timeline.Item>)
-              })}
-            {/* <Timeline.Item>Create a services site 2015-09-01</Timeline.Item>
-            <Timeline.Item>
-              Solve initial network problems 2015-09-01
-            </Timeline.Item>
-            <Timeline.Item>Technical testing 2015-09-01</Timeline.Item>
-            <Timeline.Item>
-              Network problems being solved 2015-09-01
-            </Timeline.Item> */}
+            {activityHistory.map((activity: string) => {
+              return <Timeline.Item>{activity}</Timeline.Item>;
+            })}
           </Timeline>
         </Card>
       ) : null}
