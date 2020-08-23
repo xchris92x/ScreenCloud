@@ -25,6 +25,7 @@ const Dashboard = ({
   const [showActivity, setShowActivity] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [userBalance, setUserBalance] = useState(initialBalance + overdraft );
+  const [activityHistory, setActivity] = useState([]) as any;
 
   //   const [availableNotes, setAvailableNotes] = useReducer(
   //     (state: any, action: any): any => {
@@ -134,6 +135,13 @@ const Dashboard = ({
     setAvailableNotes(newAvailableNotesValue);
     setUserBalance(userBalance - withdrawlAmount);
 
+    let activity : string[]= [...activityHistory];
+
+    activity.push(`£${withdrawlAmount} withdrawn ${new Date().toLocaleDateString()}`);
+
+    // Add Item to Activity
+    setActivity(activity);
+
     console.log(sortedNotes);
     console.log("withdrawnNotes", withdrawnNotes);
     console.log("availableNotes", availableNotes);
@@ -236,14 +244,18 @@ const Dashboard = ({
           }
         >
           <Timeline>
-            <Timeline.Item>Create a services site 2015-09-01</Timeline.Item>
+              {activityHistory.map((activity: string)=>{
+
+              return(<Timeline.Item>{activity}</Timeline.Item>)
+              })}
+            {/* <Timeline.Item>Create a services site 2015-09-01</Timeline.Item>
             <Timeline.Item>
               Solve initial network problems 2015-09-01
             </Timeline.Item>
             <Timeline.Item>Technical testing 2015-09-01</Timeline.Item>
             <Timeline.Item>
               Network problems being solved 2015-09-01
-            </Timeline.Item>
+            </Timeline.Item> */}
           </Timeline>
         </Card>
       ) : null}
