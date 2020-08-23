@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useReducer } from "react";
 import {
   Card,
   Timeline,
@@ -8,23 +8,44 @@ import {
   InputNumber,
   notification,
 } from "antd";
+
 import { LeftOutlined } from "@ant-design/icons";
+
 const Dashboard = ({
-  userBalance,
+  initialBalance,
   overdraft,
 }: {
-  userBalance: number;
+    initialBalance: number;
   overdraft: number;
 }) => {
-  const [ShowWithdrawlForm, setShowWithdrawlForm] = useState(false);
-  const [ShowActivity, setShowActivity] = useState(false);
-  const [ShowBalance, setShowBalance] = useState(true);
 
-  const notes = {
-    5: 4,
-    10: 15,
-    20: 7,
-  };
+   
+
+  const [showWithdrawlForm, setShowWithdrawlForm] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const [showBalance, setShowBalance] = useState(true);
+  const [userBalance, setUserBalance] = useState(initialBalance + overdraft );
+
+  //   const [availableNotes, setAvailableNotes] = useReducer(
+  //     (state: any, action: any): any => {
+  //       let stateTemp = Object.assign({}, state);
+
+  //       stateTemp[action.key] = action.value;
+
+  //       return stateTemp;
+  //     },
+  //     {
+  //       "5": 4,
+  //       "10": 15,
+  //       "20": 7,
+  //     }
+  //   );
+
+  const [availableNotes, setAvailableNotes] = useState({
+    "5": 4,
+    "10": 15,
+    "20": 7,
+  }) as any;
 
   const onWithDrawalFormSubmission = (formValues: any) => {
     console.log(formValues);
@@ -33,45 +54,97 @@ const Dashboard = ({
   };
 
   const calculateNoteWithdrawl = (withdrawlAmount: number) => {
-    // Sort availables from largest to smallest
-    let sortedNotes = Object.keys(notes).sort((a: string, b: string) => {
-      return Number(b) - Number(a);
-    });
+    console.log("availableNotesStart", availableNotes);
 
     // Make sure the withdrawl amount is in multiples of 5 to allow notes to meet the value
-    if(withdrawlAmount % 5 != 0){
-        notification.error({
-            message: "Invalid Amount",
-            description: "Requested Amount must be in multiples of 5 e.g. 5, 10, 15",
-          });
-    
-          return("Requested Amount Exceeds User Balance");
+    if (withdrawlAmount % 5 != 0) {
+      notification.error({
+        message: "Invalid Amount",
+        description:
+          "Requested Amount must be in multiples of 5 e.g. 5, 10, 15",
+      });
+
+      return "Requested Amount Exceeds User Balance";
     }
 
     // First check if they can withdraw with combined overdraft
-    if (withdrawlAmount > (userBalance + overdraft)) {
+    if (withdrawlAmount > userBalance) {
       notification.error({
         message: "Balance Exceeded",
         description: "Requested Amount Exceeds User Balance",
       });
 
-      return("Requested Amount Exceeds User Balance");
+      return "Requested Amount Exceeds User Balance";
     }
-
-
 
     // Warn them they will use their overdraft if higher than balance and into the overdraft
 
+    // Sort availables from largest to smallest
+    let sortedNotes: string[] = Object.keys(availableNotes).sort(
+      (a: string, b: string) => {
+        return Number(b) - Number(a);
+      }
+    );
+
+    let remainingWithdrawlAmount: number = withdrawlAmount;
+    let withdrawnNotes: any = {};
+
+    let newAvailableNotesValue: any = Object.assign({}, availableNotes);
+
     // Iterate through each note and work out how many of each note is required starting with the largest to smallest
+    sortedNotes.forEach((note: string) => {
+      let numberOfPossibleNotesAvailable = availableNotes[note];
+
+      console.log("availableNotes[note]", availableNotes[note]);
+
+      let numberOfNotesRequired = Math.floor(
+        remainingWithdrawlAmount / Number(note)
+      );
+
+      if (numberOfPossibleNotesAvailable < numberOfNotesRequired) {
+        numberOfNotesRequired = numberOfPossibleNotesAvailable;
+      }
+
+      //Each note proceeding takes 2x as many to achieve the higher level note, to spread the notes out more evenly,
+      //if the large note is greater than 1 then subtract 1 and take 2 of the smaller notes if they are available and do not result in the next notes being 0
+
+      // Remove Values from remaining WithdrawlAmount
+      remainingWithdrawlAmount =
+        remainingWithdrawlAmount -
+        Math.floor(numberOfNotesRequired) * Number(note);
+
+      console.log(numberOfNotesRequired);
+      console.log(numberOfNotesRequired);
+      console.log("Reduction amount", numberOfNotesRequired * Number(note));
+
+      console.log("remainingWithdrawlAmount", remainingWithdrawlAmount);
+
+      withdrawnNotes[note] = numberOfNotesRequired;
+
+      // // Subtract the notes from the running total
+
+      newAvailableNotesValue[note] -= numberOfNotesRequired;
+
+      // console.log(newAvailableNotesValue[note]);
+
+      console.log("availableNotes", availableNotes);
+      console.log("newAvailableNotesValue", newAvailableNotesValue);
+    });
+
+    setAvailableNotes(newAvailableNotesValue);
+    setUserBalance(userBalance - withdrawlAmount);
 
     console.log(sortedNotes);
+    console.log("withdrawnNotes", withdrawnNotes);
+    console.log("availableNotes", availableNotes);
+    console.log("newAvailableNotesValue", newAvailableNotesValue);
   };
 
   return (
     <div id="Dashboard">
-      {ShowBalance ? (
-        <Card title="Balance" id="BalanceCard" >
-          <h1 id="Balance">£{userBalance + overdraft}</h1>
+      {showBalance ? (
+        <Card title="Balance" id="BalanceCard">
+          <h1 id="Balance">£{userBalance}</h1>
           <p>Overdraft: £{overdraft} </p>
           <Button
             className="BalanceButton"
@@ -99,7 +172,7 @@ const Dashboard = ({
         </Card>
       ) : null}
 
-      {ShowWithdrawlForm ? (
+      {showWithdrawlForm ? (
         <Card
           title={
             <div>
@@ -143,7 +216,7 @@ const Dashboard = ({
         </Card>
       ) : null}
 
-      {ShowActivity ? (
+      {showActivity ? (
         <Card
           title={
             <div>

@@ -42,9 +42,11 @@ const App = () => {
 
     setShowLoginLoading(true);
     setShowLogin(false);
-    
+
     let userInfo = await login(pin);
     processLoginResponse(userInfo, { name: name, pin: pin, remember: true });
+
+
   };
 
   const onLoginSubmission = async (values: any): Promise<void> => {
@@ -70,8 +72,10 @@ const App = () => {
       setShowProfile(true);
       setShowLogin(false);  
       setShowLoginLoading(false);
-      setShowDashboard(true);
       setUserBalance(userInfo.currentBalance);
+
+      // Make sure this is set after userBalance, otherwise the initial value would be 0 and the balance wrong
+      setShowDashboard(true);
 
       // More secure ways to store this but using it as demo of functionality
       if (formValues.remember) {
@@ -185,7 +189,7 @@ const App = () => {
         ) : null}
 
         {ShowDashboard ? (
-          <Dashboard userBalance={userBalance} overdraft={100} />
+          <Dashboard initialBalance={userBalance} overdraft={100} />
         ) : null}
       </div>
 
