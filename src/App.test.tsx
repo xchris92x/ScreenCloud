@@ -1,5 +1,11 @@
 import React from "react";
-import { render, screen, getByRole, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  getByRole,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import App from "./App";
 import Dashboard from "./Dashboard";
 import userEvent from "@testing-library/user-event";
@@ -19,8 +25,8 @@ const expectedNoteValues = [
     withdrawlAmount: 50,
     expectedValues: [
       "1x £20 notes withdrawn",
-      "2x £10 notes withdrawn",
-      "2x £5 notes withdrawn",
+      "3x £10 notes withdrawn",
+      "0x £5 notes withdrawn",
     ],
   },
 ];
@@ -51,44 +57,41 @@ test("The user balance is correctly shown", () => {
 
 // This is also the full form flow
 test("Test Full WithDrawl Flow", async () => {
+  render(<Dashboard overdraft={overdraft} initialBalance={initialBalance} />);
 
+  // // Click withdrawl button
+  // userEvent.click(screen.getByText("Withdraw"));
 
-  render(<Dashboard overdraft={overdraft} initialBalance={initialBalance} />)
+  // // Test That the form appears
+  // // var withdrawlForm = await screen.getByText(/Make a Withdrawl/i);
 
+  // Enter the withdrawl amount
 
-  
+  // Submit the form
 
+  for (let i = 0; i < expectedNoteValues.length; i++) {
+    let noteTest: noteTest = expectedNoteValues[i];
 
-  // Click withdrawl button
-  userEvent.click(screen.getByText("Withdraw"));
+    // Click withdrawl button
+    userEvent.click(screen.getByText("Withdraw"));
 
-  // Test That the form appears
-  // var withdrawlForm = await screen.getByText(/Make a Withdrawl/i);
+    // Test That the form appears
+    var withdrawlForm = await screen.getByText(/Make a Withdrawl/i);
 
+    expect(withdrawlForm).toBeInTheDocument();
 
-  // Click withdrawl button
-  userEvent.type(screen.getByRole("withdrawlInput"), "50");
+    userEvent.type(screen.getByRole("withdrawlInput"), "50");
 
-  await act( async () => {
-    await fireEvent.click(screen.getByRole('submit'));
-  });
-
-
-  
-    // Enter the withdrawl amount
-
-    // Submit the form
-    
-    // Iterate through each test case
-    expectedNoteValues.forEach(async (noteTest: noteTest) => {
-
-      
-      // Check the correct note values are showing
-      noteTest.expectedValues.forEach((expectedValue: string) => {
-        // Check each of the expected outputs
-        const linkElement = screen.getByText(`${expectedValue}`);
-        expect(linkElement).toBeInTheDocument();
-      });
+    await act(async () => {
+      await fireEvent.click(screen.getByRole("submit"));
     });
-  
+
+    // Check the correct note values are showing
+    noteTest.expectedValues.forEach((expectedValue: string) => {
+      // Check each of the expected outputs
+      const linkElement = screen.getByText(`${expectedValue}`);
+      expect(linkElement).toBeInTheDocument();
+    });
+  }
+
 });
