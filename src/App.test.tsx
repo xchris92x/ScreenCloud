@@ -21,7 +21,8 @@ interface noteTest {
   expectedBalance: number;
 }
 
-
+// Mock window.confirm, this will allow the full flow test to proceed without handing on the popup
+window.confirm = jest.fn(() => true) // always click 'yes'
 
 // Issue with Jest, using the official workaround to make matchMediaWork
 // https://jestjs.io/docs/en/manual-mocks#mocking-methods-which-are-not-implemented-in-jsdom
@@ -46,6 +47,8 @@ test("The user balance is correctly shown", () => {
   const balanceElement = getByText(/£320/i);
   expect(balanceElement).toBeInTheDocument();
 });
+
+
 
 test("Test Full WithDrawl Flow", async () => {
 

@@ -1,5 +1,15 @@
 import { LeftOutlined } from "@ant-design/icons";
-import { Avatar, Button, Card, Form, InputNumber, List, Timeline } from "antd";
+import {
+  Avatar,
+  Button,
+  Card,
+  Form,
+  InputNumber,
+  List,
+  Modal,
+  notification,
+  Timeline,
+} from "antd";
 import React, { useState } from "react";
 
 const Dashboard = ({
@@ -15,6 +25,7 @@ const Dashboard = ({
   );
   const [showActivity, setShowActivity] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+  const [showOverdraftModal, setShowOverdraftModal] = useState(false);
   const [userBalance, setUserBalance] = useState(initialBalance + overdraft);
   const [activityHistory, setActivity] = useState([]) as any;
   const [withDrawnNotes, setwithDrawnNotes] = useState([]) as any;
@@ -30,28 +41,40 @@ const Dashboard = ({
   };
 
   const calculateNoteWithdrawl = async (withdrawlAmount: number) => {
-    // // Make sure the withdrawl amount is in multiples of 5 to allow notes to meet the value
-    // if (withdrawlAmount % 5 != 0) {
-    //   notification.error({
-    //     message: "Invalid Amount",
-    //     description:
-    //       "Requested Amount must be in multiples of 5 e.g. 5, 10, 15",
-    //   });
+    // Make sure the withdrawl amount is in multiples of 5 to allow notes to meet the value
+    if (withdrawlAmount % 5 != 0) {
+      notification.error({
+        message: "Invalid Amount",
+        description:
+          "Requested Amount must be in multiples of 5 e.g. 5, 10, 15",
+      });
 
-    //   return "Requested Amount Exceeds User Balance";
-    // }
+      return "Requested Amount Exceeds User Balance";
+    }
 
-    // // First check if they can withdraw with combined overdraft
-    // if (withdrawlAmount > userBalance) {
-    //   notification.error({
-    //     message: "Balance Exceeded",
-    //     description: "Requested Amount Exceeds User Balance",
-    //   });
+    // First check if they can withdraw with combined overdraft
+    if (withdrawlAmount > userBalance) {
+      notification.error({
+        message: "Balance Exceeded",
+        description: "Requested Amount Exceeds User Balance",
+      });
 
-    //   return "Requested Amount Exceeds User Balance";
-    // }
+      return "Requested Amount Exceeds User Balance";
+    }
 
-    // Warn them they will use their overdraft if higher than balance and into the overdraft
+    let tempBalanceAfterWithdrawl = userBalance - withdrawlAmount;
+
+    if (withdrawlAmount > initialBalance || tempBalanceAfterWithdrawl < overdraft) {
+
+      // Warn them they will use their overdraft if higher than balance and into the overdraft
+      if (
+        !window.confirm(
+          "This withdrawl will require you to use your overdraft, would you like to proceed ?"
+        )
+      ) {
+        return "User Does not wish to proceed";
+      }
+    }
 
     // Sort availables from largest to smallest
     let sortedNotes: string[] = Object.keys(availableNotes).sort(
@@ -66,7 +89,7 @@ const Dashboard = ({
     let currentAvailableNotes: any = Object.assign({}, availableNotes);
 
     // Iterate through each note and work out how many of each note is required starting with the largest to smallest
-   await sortedNotes.forEach((note: string, index: number) => {
+    await sortedNotes.forEach((note: string, index: number) => {
       let numberOfPossibleNotesAvailable = availableNotes[note];
 
       let numberOfNotesRequired = Math.floor(
@@ -87,14 +110,12 @@ const Dashboard = ({
 
           smallerNotesTotal +=
             currentAvailableNotes[smallerNote] * Number(smallerNote);
-
-          console.log(smallerNote, currentAvailableNotes[smallerNote]);
         }
-
 
         // Calculate the balance if the number of larger notes was cut in half
         let requiredBalance =
-          withdrawlAmount - Math.round(numberOfNotesRequired / 2) * Number(note);
+          withdrawlAmount -
+          Math.round(numberOfNotesRequired / 2) * Number(note);
 
         // If the smaller notes are large enough to meet the requirement then half the number of larger notes
         if (requiredBalance < smallerNotesTotal) {
@@ -103,17 +124,15 @@ const Dashboard = ({
       }
 
       // Remove Values from remaining WithdrawlAmount
-      remainingWithdrawlAmount -=
-        numberOfNotesRequired * Number(note);
+      remainingWithdrawlAmount -= numberOfNotesRequired * Number(note);
 
-      notesWithdrawn.push({note: note ,value: numberOfNotesRequired});
+      notesWithdrawn.push({ note: note, value: numberOfNotesRequired });
 
       // // Subtract the notes from the running total
 
       currentAvailableNotes[note] -= numberOfNotesRequired;
     });
 
-   
     let activity: string[] = [...activityHistory];
 
     activity.push(
@@ -125,15 +144,11 @@ const Dashboard = ({
 
     setAvailableNotes(currentAvailableNotes);
     setUserBalance(userBalance - withdrawlAmount);
-    
+
     setwithDrawnNotes(notesWithdrawn);
     setShowWithdrawlForm(false);
     setShowWithdrawlConfirmation(true);
-
-    console.log("currentAvailableNotes", currentAvailableNotes);
-    console.log("notesWithdrawn", notesWithdrawn);
   };
-
 
   return (
     <div id="Dashboard">
@@ -167,7 +182,6 @@ const Dashboard = ({
           </Button>
         </Card>
       ) : null}
-
       {showWithdrawlForm ? (
         <div>
           <Card
@@ -189,8 +203,10 @@ const Dashboard = ({
             }
             id="withdrawlCard"
           >
-            <Form name="basic" onFinish={onWithDrawalFormSubmission}
-            layout="horizontal"
+            <Form
+              name="basic"
+              onFinish={onWithDrawalFormSubmission}
+              layout="horizontal"
             >
               <Form.Item
                 label="Amount"
@@ -215,12 +231,11 @@ const Dashboard = ({
           </Card>
         </div>
       ) : null}
-
       {showWithdrawlConfirmation ? (
         <Card
           title={
             <div>
-              <button 
+              <button
                 role="backButton"
                 className="CardBackButton"
                 onClick={() => {
@@ -237,20 +252,22 @@ const Dashboard = ({
           }
           id="ConfrimationCard"
         >
-          <List 
-            
+          <List
             itemLayout="horizontal"
             dataSource={withDrawnNotes}
-            renderItem={(note : {
-                note: string;
-                value: number;
-            }) => (
+            renderItem={(note: { note: string; value: number }) => (
               <List.Item role="listItem">
                 <List.Item.Meta
                   avatar={
-                    <Avatar src={`${process.env.PUBLIC_URL}/Pound-Sterling.png`} />
+                    <Avatar
+                      src={`${process.env.PUBLIC_URL}/Pound-Sterling.png`}
+                    />
                   }
-                title={<div>{note.value}x £{note.note} notes withdrawn</div>}
+                  title={
+                    <div>
+                      {note.value}x £{note.note} notes withdrawn
+                    </div>
+                  }
                 />
               </List.Item>
             )}
@@ -268,7 +285,6 @@ const Dashboard = ({
           </Button>
         </Card>
       ) : null}
-
       {showActivity ? (
         <Card
           title={

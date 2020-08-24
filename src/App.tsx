@@ -55,14 +55,12 @@ const App = () => {
     setShowLoginLoading(true);
     setShowLogin(false);
 
-    let formValues: login = values;
-    console.log("Success:", formValues);
+    let formValues: login = values;;
 
     let userInfo = await login(formValues.pin);
 
     processLoginResponse(userInfo, formValues);
 
-    console.log(userInfo);
   };
 
   const processLoginResponse = (userInfo: any, formValues: login) => {
@@ -75,7 +73,7 @@ const App = () => {
       setShowLoginLoading(false);
       setUserBalance(userInfo.currentBalance);
 
-      // Make sure this is set after userBalance, otherwise the initial value would be 0 and the balance wrong
+      // Make sure this is set after userBalance, otherwise the initial value would be 0 and the balance would be wrong
       setShowDashboard(true);
 
       // More secure ways to store this but using it as demo of functionality
