@@ -1,6 +1,6 @@
 import { LeftOutlined } from "@ant-design/icons";
 import { Button, Card, Form, InputNumber, notification, Timeline, List, Avatar } from "antd";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const Dashboard = ({
   initialBalance,
@@ -19,21 +19,6 @@ const Dashboard = ({
   const [activityHistory, setActivity] = useState([]) as any;
   const [withDrawnNotes, setwithDrawnNotes] = useState([]) as any;
 
-  //   const [availableNotes, setAvailableNotes] = useReducer(
-  //     (state: any, action: any): any => {
-  //       let stateTemp = Object.assign({}, state);
-
-  //       stateTemp[action.key] = action.value;
-
-  //       return stateTemp;
-  //     },
-  //     {
-  //       "5": 4,
-  //       "10": 15,
-  //       "20": 7,
-  //     }
-  //   );
-
   const [availableNotes, setAvailableNotes] = useState({
     "5": 4,
     "10": 15,
@@ -44,27 +29,27 @@ const Dashboard = ({
     calculateNoteWithdrawl(formValues.withdrawlAmount);
   };
 
-  const calculateNoteWithdrawl = (withdrawlAmount: number) => {
-    // Make sure the withdrawl amount is in multiples of 5 to allow notes to meet the value
-    if (withdrawlAmount % 5 != 0) {
-      notification.error({
-        message: "Invalid Amount",
-        description:
-          "Requested Amount must be in multiples of 5 e.g. 5, 10, 15",
-      });
+  const calculateNoteWithdrawl = async (withdrawlAmount: number) => {
+    // // Make sure the withdrawl amount is in multiples of 5 to allow notes to meet the value
+    // if (withdrawlAmount % 5 != 0) {
+    //   notification.error({
+    //     message: "Invalid Amount",
+    //     description:
+    //       "Requested Amount must be in multiples of 5 e.g. 5, 10, 15",
+    //   });
 
-      return "Requested Amount Exceeds User Balance";
-    }
+    //   return "Requested Amount Exceeds User Balance";
+    // }
 
-    // First check if they can withdraw with combined overdraft
-    if (withdrawlAmount > userBalance) {
-      notification.error({
-        message: "Balance Exceeded",
-        description: "Requested Amount Exceeds User Balance",
-      });
+    // // First check if they can withdraw with combined overdraft
+    // if (withdrawlAmount > userBalance) {
+    //   notification.error({
+    //     message: "Balance Exceeded",
+    //     description: "Requested Amount Exceeds User Balance",
+    //   });
 
-      return "Requested Amount Exceeds User Balance";
-    }
+    //   return "Requested Amount Exceeds User Balance";
+    // }
 
     // Warn them they will use their overdraft if higher than balance and into the overdraft
 
@@ -81,7 +66,7 @@ const Dashboard = ({
     let currentAvailableNotes: any = Object.assign({}, availableNotes);
 
     // Iterate through each note and work out how many of each note is required starting with the largest to smallest
-    sortedNotes.forEach((note: string, index: number) => {
+   await sortedNotes.forEach((note: string, index: number) => {
       let numberOfPossibleNotesAvailable = availableNotes[note];
 
       let numberOfNotesRequired = Math.floor(
@@ -130,26 +115,26 @@ const Dashboard = ({
       currentAvailableNotes[note] -= numberOfNotesRequired;
     });
 
-    setAvailableNotes(currentAvailableNotes);
-    setUserBalance(userBalance - withdrawlAmount);
-
+   
     let activity: string[] = [...activityHistory];
 
     activity.push(
       `£${withdrawlAmount} withdrawn ${new Date().toLocaleDateString()}`
     );
 
-    // Add Item to Activity
+    // // Add Item to Activity
     setActivity(activity);
 
+    setAvailableNotes(currentAvailableNotes);
+    setUserBalance(userBalance - withdrawlAmount);
+    setwithDrawnNotes(notesWithdrawn);
     setShowWithdrawlForm(false);
     setShowWithdrawlConfirmation(true);
-    setwithDrawnNotes(notesWithdrawn);
 
-    console.log("withdrawnNotes", notesWithdrawn);
-    console.log("availableNotes", availableNotes);
-    console.log("newAvailableNotesValue", currentAvailableNotes);
+    console.log("currentAvailableNotes", currentAvailableNotes);
+    console.log("notesWithdrawn", notesWithdrawn);
   };
+
 
   return (
     <div id="Dashboard">
@@ -172,6 +157,7 @@ const Dashboard = ({
           <Button
             className="BalanceButton"
             type="primary"
+            id="withdrawButton"
             onClick={() => {
               setShowActivity(true);
 
@@ -216,11 +202,11 @@ const Dashboard = ({
                   { type: "integer", message: "Please enter a number !" },
                 ]}
               >
-                <InputNumber />
+                <InputNumber role="withdrawlInput" id="withdrawlInput" />
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" role="submit">
                   Submit
                 </Button>
               </Form.Item>
@@ -249,19 +235,20 @@ const Dashboard = ({
           }
           id="ConfrimationCard"
         >
-          <List
+          <List 
+            
             itemLayout="horizontal"
             dataSource={withDrawnNotes}
             renderItem={(note : {
                 note: string;
                 value: number;
             }) => (
-              <List.Item>
+              <List.Item role="listItem">
                 <List.Item.Meta
                   avatar={
                     <Avatar src={`${process.env.PUBLIC_URL}/Pound-Sterling.png`} />
                   }
-                title={<a href="https://ant.design">{note.value}x £{note.note} notes withdrawn</a>}
+                title={<div>{note.value}x £{note.note} notes withdrawn</div>}
                 />
               </List.Item>
             )}
