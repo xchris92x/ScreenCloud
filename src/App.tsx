@@ -21,12 +21,13 @@ interface login {
 }
 
 const App = () => {
-  const [Name, setName] = useState("");
-  const [ShowProfile, setShowProfile] = useState(false);
-  const [ShowLogin, setShowLogin] = useState(true);
-  const [ShowLoginLoading, setShowLoginLoading] = useState(false);
-  const [ShowDashboard, setShowDashboard] = useState(false);
+  const [name, setName] = useState("");
+  const [showProfile, setShowProfile] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
+  const [showLoginLoading, setShowLoginLoading] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [userBalance, setUserBalance] = useState(0);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Check if the user creds are already saved if they are then skip login
   useEffect(() => {
@@ -81,6 +82,8 @@ const App = () => {
       if (formValues.remember) {
         window.localStorage.setItem("Name", formValues.name);
         window.localStorage.setItem("Pin", formValues.pin);
+
+        setRememberMe(true);
       }
     } else {
       if (userInfo.error) {
@@ -133,9 +136,9 @@ const App = () => {
 
   return (
     <div className="App">
-      <Navigation ShowProfile={ShowProfile} Name={Name} onSignOut={onSignOut} />
+      <Navigation ShowProfile={showProfile} Name={name} onSignOut={onSignOut} />
       <div id="mainContainer">
-        {ShowLogin ? (
+        {showLogin ? (
           <div id="Login">
             <Card title="Enter Your Bank Credentials" id="loginCard">
               <Form name="basic" onFinish={onLoginSubmission}>
@@ -176,7 +179,7 @@ const App = () => {
             </Card>
           </div>
         ) : null}
-        {ShowLoginLoading ? (
+        {showLoginLoading ? (
           <div id="LoginLoading">
           <Card title="Enter Your Bank Credentials" id="loginCard">
             <h1>Signing You In</h1>
@@ -188,7 +191,7 @@ const App = () => {
           </div>
         ) : null}
 
-        {ShowDashboard ? (
+        {showDashboard ? (
           <Dashboard initialBalance={userBalance} overdraft={100} />
         ) : null}
       </div>

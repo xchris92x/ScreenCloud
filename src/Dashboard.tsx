@@ -1,6 +1,6 @@
 import { LeftOutlined } from "@ant-design/icons";
-import { Button, Card, Form, InputNumber, notification, Timeline, List, Avatar } from "antd";
-import React, { useState, useEffect } from "react";
+import { Avatar, Button, Card, Form, InputNumber, List, Timeline } from "antd";
+import React, { useState } from "react";
 
 const Dashboard = ({
   initialBalance,
@@ -125,6 +125,7 @@ const Dashboard = ({
 
     setAvailableNotes(currentAvailableNotes);
     setUserBalance(userBalance - withdrawlAmount);
+    
     setwithDrawnNotes(notesWithdrawn);
     setShowWithdrawlForm(false);
     setShowWithdrawlConfirmation(true);
@@ -188,7 +189,9 @@ const Dashboard = ({
             }
             id="withdrawlCard"
           >
-            <Form name="basic" onFinish={onWithDrawalFormSubmission}>
+            <Form name="basic" onFinish={onWithDrawalFormSubmission}
+            layout="horizontal"
+            >
               <Form.Item
                 label="Amount"
                 name="withdrawlAmount"
@@ -217,7 +220,8 @@ const Dashboard = ({
         <Card
           title={
             <div>
-              <button
+              <button 
+                role="backButton"
                 className="CardBackButton"
                 onClick={() => {
                   setShowWithdrawlConfirmation(false);
