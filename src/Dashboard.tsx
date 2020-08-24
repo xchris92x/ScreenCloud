@@ -77,13 +77,12 @@ const Dashboard = ({
         numberOfNotesRequired = numberOfPossibleNotesAvailable;
       }
 
-      //Each note proceeding takes 2x as many to achieve the higher value note, to spread the notes out more evenly,
-      //if the large note is greater than 1 then subtract 1 and take 2 of the smaller notes if they are available and do not result in the next notes being 0
+      //Each note larger note is 2x larger than the previous, by splitting it in half it should allow a more even distribution
       if (numberOfNotesRequired > 1 && index != sortedNotes.length - 1) {
         let smallerNotesTotal = 0;
 
-        // Check if there are enough smaller notes to make the balance requirement
-        for (let i = index; i < sortedNotes.length; i++) {
+        // Check if there are enough smaller notes to meet the balance requirement
+        for (let i = index + 1; i < sortedNotes.length; i++) {
           let smallerNote = sortedNotes[i];
 
           smallerNotesTotal +=
@@ -92,21 +91,20 @@ const Dashboard = ({
           console.log(smallerNote, currentAvailableNotes[smallerNote]);
         }
 
-        console.log("notesTotal", smallerNotesTotal);
 
+        // Calculate the balance if the number of larger notes was cut in half
         let requiredBalance =
-          withdrawlAmount - (numberOfNotesRequired - 1) * Number(note);
+          withdrawlAmount - Math.round(numberOfNotesRequired / 2) * Number(note);
 
-        console.log("requiredBalance", requiredBalance);
-
+        // If the smaller notes are large enough to meet the requirement then half the number of larger notes
         if (requiredBalance < smallerNotesTotal) {
-          numberOfNotesRequired--;
+          numberOfNotesRequired = Math.round(numberOfNotesRequired / 2);
         }
       }
 
       // Remove Values from remaining WithdrawlAmount
       remainingWithdrawlAmount -=
-        Math.floor(numberOfNotesRequired) * Number(note);
+        numberOfNotesRequired * Number(note);
 
       notesWithdrawn.push({note: note ,value: numberOfNotesRequired});
 
